@@ -3,7 +3,6 @@ import { getProducts, getCart, addToCart, removeFromCart, createOrderBasic, crea
 import ProductCard from './components/ProductCard.jsx'
 import AdminPanel from './components/AdminPanel.jsx'
 import PromoCategories from './components/PromoCategories.jsx'
-import OrderForm from './components/OrderForm.jsx'
 
 export default function App() {
   // Простейший вход в админку без роутера
@@ -38,9 +37,7 @@ export default function App() {
   const [visibleCount, setVisibleCount] = useState(20)
   const sentinelRef = useRef(null)
   
-  // Новые состояния для формы заказа
-  const [orderFormOpen, setOrderFormOpen] = useState(false)
-  const [orderSubmitting, setOrderSubmitting] = useState(false)
+  // Новые состояния
 
   useEffect(() => {
     // Инициализация Telegram WebApp (если открыто внутри Telegram)
@@ -173,11 +170,17 @@ export default function App() {
     try { localStorage.removeItem('mini_favorites_v1') } catch {}
   }
 
-  const handleCheckout = async (orderData) => {
-    setOrderSubmitting(true)
+  const handleDirectCheckout = async () => {
+    if (!cart.length) return
+    
+    setPlacing(true)
     try {
-      // Создаем простой заказ
-      const orderResponse = await createOrderBasic(orderData)
+      // Создаем простой заказ без формы
+      const orderResponse = await createOrderBasic({
+        customerName: 'Покупатель',
+        customerPhone: '',
+        promoCode
+      })
       
       // Создаем платеж через ЮКасса
       const w = window
@@ -185,7 +188,7 @@ export default function App() {
       const paymentResponse = await createYooKassaPayment(returnUrl)
       
       if (paymentResponse?.confirmation_url) {
-        setOrderFormOpen(false)
+        setCartOpen(false)
         setConfirmOpen(false)
         w.location.href = paymentResponse.confirmation_url
       } else {
@@ -194,13 +197,8 @@ export default function App() {
     } catch (e) {
       alert(`Ошибка оформления заказа: ${e?.message || e}`)
     } finally {
-      setOrderSubmitting(false)
+      setPlacing(false)
     }
-  }
-
-  const openOrderForm = () => {
-    setOrderFormOpen(true)
-    setCartOpen(false)
   }
 
   const applyConfirmPromo = () => {
@@ -403,7 +401,7 @@ export default function App() {
             {/* Убрали промокод и скидку из полноэкранной корзины */}
             <div className="confirm-actions" style={{ marginTop: 14 }}>
               <button className="primary" onClick={() => setCartOpen(false)}>Назад</button>
-              <button className="primary" disabled={!payable || placing} onClick={openOrderForm}>Оформить</button>
+              <button className="primary" disabled={!payable || placing} onClick={handleDirectCheckout}>Оплатить</button>
             </div>
 
             {/* Рекомендации в корзине */}
@@ -432,18 +430,6 @@ export default function App() {
           </div>
         </div>
       )}
-      {orderFormOpen && (
-        <OrderForm
-          cart={cart}
-          totalAmount={total}
-          finalAmount={payable}
-          discountAmount={discount}
-          promoCode={promoCode}
-          onClose={() => setOrderFormOpen(false)}
-          onSubmit={handleCheckout}
-          isSubmitting={orderSubmitting}
-        />
-      )}
       {confirmOpen && (
         <div className="confirm-overlay" role="dialog" aria-modal="true">
           <div className="confirm-sheet">
@@ -460,7 +446,7 @@ export default function App() {
             </div>
             <div className="confirm-actions">
               <button className="link" onClick={() => setConfirmOpen(false)}>Назад</button>
-              <button className="primary" onClick={openOrderForm}>Новое оформление</button>
+              <button className="primary" onClick={handleDirectCheckout}>Оплатить снова</button>
             </div>
           </div>
         </div>
