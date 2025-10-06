@@ -1,65 +1,158 @@
-TG Mini-Shop (простая версия)
+# Emerald - Интернет-магазин косметики
 
-Запуск серверной части:
+Современный интернет-магазин косметики Davines, построенный на React и адаптированный для Telegram Mini Apps.
 
-1) Перейти в папку `server`
-2) Скопировать `.env.example.txt` в `.env` и заполнить при необходимости
-3) Установить зависимости и запустить:
+## 🌟 Особенности
 
+- ✅ Современный дизайн с адаптивной версткой
+- ✅ Каталог продукции Davines с изображениями
+- ✅ Корзина покупок
+- ✅ Интеграция с ЮKassa для оплаты
+- ✅ Telegram Mini App поддержка
+- ✅ Админ-панель для управления товарами
+- ✅ Промокоды и скидки
+- ✅ Система заказов
+
+## 🚀 Быстрый старт
+
+### Для GitHub Pages
+
+Проект автоматически деплоится на GitHub Pages при push в ветку `main`.
+
+URL: https://remor1s.github.io/emerald/
+
+### Локальная разработка
+
+1. Клонируйте репозиторий:
 ```bash
-cd server
+git clone https://github.com/Remor1s/emerald.git
+cd emerald
+```
+
+2. Установите зависимости для клиента:
+```bash
+cd client
 npm install
+```
+
+3. Запустите клиент:
+```bash
 npm run dev
 ```
 
-Эндпоинты:
-- `GET /api/products`
-- `GET /api/products/:id`
-- `GET /api/cart` (заголовок `x-user-id` для изоляции)
-- `POST /api/cart` { productId, qty }
-- `DELETE /api/cart/:productId`
-- `POST /api/orders`
+Клиент будет доступен по адресу http://localhost:5173
 
-Далее будет добавлен фронтенд (Vite React, JS) c карточками 4:5 и плейсхолдерами изображений «как у Золотого Яблока».
+### Сервер (опционально)
 
+Если нужен полнофункциональный сервер с базой данных:
 
-## Deployment
+1. Установите зависимости для сервера:
+```bash
+cd server
+npm install
+```
 
-This project consists of two parts: a client (frontend) and a server (backend).
+2. Создайте файл `.env`:
+```env
+YK_SHOP_ID=ваш_shop_id_из_личного_кабинета
+YK_SECRET_KEY=ваш_secret_key_из_личного_кабинета
+RETURN_URL=http://localhost:5173
+PORT=4000
+ORIGIN=*
+ADMIN_KEY=your_admin_key
+```
 
-### Frontend (Client)
+3. Запустите сервер:
+```bash
+npm run dev
+```
 
-The frontend is a React application built with Vite. It can be deployed as a static site to GitHub Pages.
+## 📱 Telegram Mini App
 
-1.  **Push to GitHub:** Push your code to a GitHub repository.
-2.  **Automatic Deployment:** A GitHub Actions workflow is included (`.github/workflows/deploy-pages.yml`) that will automatically build and deploy the client to GitHub Pages when you push to the `main` or `master` branch.
-3.  **Configure API URL:** The deployed client needs to know the URL of your deployed backend.
-    *   Go to your GitHub repository's `Settings` > `Secrets and variables` > `Actions`.
-    *   Click `New repository secret`.
-    *   Create a secret named `VITE_API_URL` and set its value to the URL of your deployed server (e.g., `https://your-server-app.onrender.com`).
-4.  **Enable GitHub Pages:**
-    *   In your repository settings, go to the `Pages` section.
-    *   For the `Source`, select `Deploy from a branch`.
-    *   Then switch the source to `GitHub Actions`.
+Для использования как Telegram Mini App:
 
-After the workflow runs successfully, your site will be available at `https://<your-username>.github.io/<your-repo-name>/`.
+1. Создайте бота через @BotFather
+2. Добавьте Web App URL: https://remor1s.github.io/emerald/
+3. Настройте меню бота
 
-### Backend (Server)
+## 🛠 Технологии
 
-The backend is a Node.js Express server. It cannot be hosted on GitHub Pages and needs to be deployed to a service that supports Node.js applications, such as Render, Heroku, or Vercel.
+- **Frontend**: React, Vite, CSS3
+- **Backend**: Node.js, Express, SQLite
+- **Платежи**: ЮKassa API
+- **Деплой**: GitHub Pages, GitHub Actions
 
-Here are instructions for deploying to **Render** (which has a free tier):
+## 📝 Структура проекта
 
-1.  **Create a new Web Service** on Render and connect your GitHub repository.
-2.  **Configuration:**
-    *   **Root Directory:** `server`
-    *   **Build Command:** `npm install`
-    *   **Start Command:** `npm start`
-    *   **Environment:** Select `Node`.
-    *   A `render.yaml` file is included in the root of the project to simplify this setup. Render might detect it automatically.
-3.  **Add Environment Variables:**
-    *   You can add environment variables if needed (e.g., `PORT`, `ORIGIN` for CORS). For this project, the defaults should work.
-4.  **Deploy:** Click `Create Web Service`. Render will build and deploy your server.
-5.  **Get the URL:** Once deployed, Render will provide you with a public URL for your server (e.g., `https://your-app-name.onrender.com`). Use this URL for the `VITE_API_URL` secret in your GitHub repository for the frontend.
+```
+emerald/
+├── client/          # React приложение
+│   ├── src/
+│   │   ├── components/
+│   │   ├── api.js
+│   │   └── ...
+│   └── dist/        # Собранные файлы
+├── server/          # Node.js сервер
+│   └── src/
+├── images/          # Статические изображения
+└── .github/         # GitHub Actions
+```
 
+## 🎨 Функциональность
 
+### Пользователи
+- Просмотр каталога товаров
+- Добавление в корзину
+- Оформление заказов
+- Оплата через ЮKassa
+
+### Админы
+- Управление товарами
+- Просмотр заказов
+- Настройка промокодов
+
+## 📦 Сборка
+
+```bash
+cd client
+npm run build
+```
+
+Собранные файлы будут в папке `client/dist/`
+
+## 🔧 Настройка
+
+### Переменные окружения клиента
+
+Создайте файл `client/.env.local`:
+```env
+VITE_API_URL=http://localhost:4000
+VITE_ADMIN_KEY=your_admin_key
+```
+
+### Переменные окружения сервера
+
+Создайте файл `server/.env`:
+```env
+YK_SHOP_ID=ваш_shop_id
+YK_SECRET_KEY=ваш_secret_key
+RETURN_URL=http://localhost:5173
+PORT=4000
+ORIGIN=*
+ADMIN_KEY=your_admin_key
+```
+
+## 📄 Лицензия
+
+MIT License
+
+## 🤝 Вклад в проект
+
+1. Форкните проект
+2. Создайте ветку для вашей функции
+3. Сделайте коммит изменений
+4. Отправьте pull request
+
+## 📞 Поддержка
+
+При возникновении вопросов создайте issue в GitHub репозитории.
