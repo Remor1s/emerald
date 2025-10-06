@@ -375,21 +375,14 @@ export const savePromoConfig = (cfg = { code: '', percent: 0 }) => {
 
 // === Новые функции для работы с полным флоу заказов ===
 
-export const createOrderWithDelivery = async (orderData) => {
-  if (!API) throw new Error('API не настроен')
-  
-  const res = await fetch(`${API}/api/orders/create`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-user-id': uid() },
-    body: JSON.stringify(orderData)
-  })
-  
-  const data = await res.json()
-  if (!res.ok) {
-    throw new Error(data?.message || data?.error || 'Ошибка создания заказа')
-  }
-  
-  return data
+export const createOrderBasic = async (orderData) => {
+  const total = db.cart.reduce((s, i) => s + i.price * i.qty, 0)
+  const discountPercent = orderData.promoCode === 'SKIDKA' ? 10 : 0
+  const discount = Math.round(total * discountPercent) / 100
+  const payable = Math.max(total - discount, 0)
+  const order = { id: Date.now(), status: 'created', total, discountPercent, discount, payable, promoCode: orderData.promoCode || '', items: [...db.cart], customerName: orderData.customerName, customerPhone: orderData.customerPhone }
+  db.cart = [] // Clear the cart
+  return mockRequest(order)
 }
 
 export const createOrderPayment = async (orderId, returnUrl) => {

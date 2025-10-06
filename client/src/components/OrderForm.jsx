@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 
 export default function OrderForm({ 
   cart, 
@@ -13,15 +13,10 @@ export default function OrderForm({
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
-    city: '',
-    deliveryAddress: '',
     promoCode: promoCode || ''
   })
   
   const [errors, setErrors] = useState({})
-
-
-
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -31,7 +26,6 @@ export default function OrderForm({
       setErrors(prev => ({ ...prev, [field]: null }))
     }
   }
-
 
   const validateForm = () => {
     const newErrors = {}
@@ -44,14 +38,6 @@ export default function OrderForm({
       newErrors.customerPhone = 'Введите телефон'
     } else if (!/^\+?[\d\s\-\(\)]{10,}$/.test(formData.customerPhone.trim())) {
       newErrors.customerPhone = 'Некорректный формат телефона'
-    }
-    
-    if (!formData.city.trim()) {
-      newErrors.city = 'Введите город'
-    }
-    
-    if (!formData.deliveryAddress.trim()) {
-      newErrors.deliveryAddress = 'Введите адрес доставки'
     }
 
     setErrors(newErrors)
@@ -103,7 +89,7 @@ export default function OrderForm({
 
         <form onSubmit={handleSubmit} className="order-form">
           <div className="form-group">
-            <label htmlFor="customerName">Имя получателя *</label>
+            <label htmlFor="customerName">Имя покупателя *</label>
             <input
               id="customerName"
               type="text"
@@ -126,32 +112,6 @@ export default function OrderForm({
               placeholder="+7 (900) 123-45-67"
             />
             {errors.customerPhone && <div className="error-text">{errors.customerPhone}</div>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="city">Город доставки *</label>
-            <input
-              id="city"
-              type="text"
-              value={formData.city}
-              onChange={(e) => handleInputChange('city', e.target.value)}
-              className={errors.city ? 'error' : ''}
-              placeholder="Введите город"
-            />
-            {errors.city && <div className="error-text">{errors.city}</div>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="deliveryAddress">Адрес доставки *</label>
-            <textarea
-              id="deliveryAddress"
-              value={formData.deliveryAddress}
-              onChange={(e) => handleInputChange('deliveryAddress', e.target.value)}
-              className={errors.deliveryAddress ? 'error' : ''}
-              placeholder="Улица, дом, квартира"
-              rows="3"
-            />
-            {errors.deliveryAddress && <div className="error-text">{errors.deliveryAddress}</div>}
           </div>
 
           <div className="form-actions">

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
-import { getProducts, getCart, addToCart, removeFromCart, createOrderWithDelivery, createOrderPayment } from './api.js'
+import { getProducts, getCart, addToCart, removeFromCart, createOrderBasic, createYooKassaPayment } from './api.js'
 import ProductCard from './components/ProductCard.jsx'
 import AdminPanel from './components/AdminPanel.jsx'
 import PromoCategories from './components/PromoCategories.jsx'
@@ -176,14 +176,13 @@ export default function App() {
   const handleCheckout = async (orderData) => {
     setOrderSubmitting(true)
     try {
-      // Создаем заказ с данными доставки
-      const orderResponse = await createOrderWithDelivery(orderData)
-      const orderId = orderResponse.order.id
-
-      // Создаем платеж для заказа  
+      // Создаем простой заказ
+      const orderResponse = await createOrderBasic(orderData)
+      
+      // Создаем платеж через ЮКасса
       const w = window
       const returnUrl = `${w.location.origin}${w.location.pathname}`
-      const paymentResponse = await createOrderPayment(orderId, returnUrl)
+      const paymentResponse = await createYooKassaPayment(returnUrl)
       
       if (paymentResponse?.confirmation_url) {
         setOrderFormOpen(false)
