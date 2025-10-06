@@ -11,7 +11,7 @@ server/server/data.sqlite
 __pycache__/
 .vscode/
 .idea/
-dist/
+client/dist/
 build/
 coverage/
 .nyc_output/
