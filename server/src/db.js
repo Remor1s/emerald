@@ -11,19 +11,37 @@ sqlite3.verbose()
 export const db = new sqlite3.Database(DB_FILE)
 
 export function initSchema() {
-  return run(`CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY,
-    sku TEXT,
-    title TEXT,
-    brand TEXT,
-    price INTEGER,
-    oldPrice INTEGER,
-    volume TEXT,
-    country TEXT,
-    badges TEXT,
-    category TEXT,
-    image TEXT
-  )`)
+  return Promise.all([
+    run(`CREATE TABLE IF NOT EXISTS products (
+      id INTEGER PRIMARY KEY,
+      sku TEXT,
+      title TEXT,
+      brand TEXT,
+      price INTEGER,
+      oldPrice INTEGER,
+      volume TEXT,
+      country TEXT,
+      badges TEXT,
+      category TEXT,
+      image TEXT
+    )`),
+    run(`CREATE TABLE IF NOT EXISTS orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'CREATED',
+      total_amount INTEGER NOT NULL,
+      discount_amount INTEGER DEFAULT 0,
+      final_amount INTEGER NOT NULL,
+      items TEXT NOT NULL,
+      delivery_address TEXT,
+      customer_name TEXT,
+      customer_phone TEXT,
+      yookassa_payment_id TEXT,
+      promo_code TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`)
+  ])
 }
 
 export function all(sql, params = []) {
@@ -101,6 +119,73 @@ export async function deleteProduct(id) {
 
 function safeParse(v) {
   try { return JSON.parse(v || '[]') } catch(e) { return [] }
+}
+
+// === ORDERS ===
+
+export async function createOrder(orderData) {
+  const {
+    userId,
+    totalAmount,
+    discountAmount = 0,
+    finalAmount,
+    items,
+    deliveryAddress,
+    customerName,
+    customerPhone,
+    promoCode
+  } = orderData
+
+  const insert = `INSERT INTO orders 
+    (user_id, total_amount, discount_amount, final_amount, items, delivery_address, customer_name, customer_phone, promo_code)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  
+  const result = await run(insert, [
+    userId,
+    totalAmount,
+    discountAmount,
+    finalAmount,
+    JSON.stringify(items),
+    deliveryAddress,
+    customerName,
+    customerPhone,
+    promoCode
+  ])
+  
+  return await getOrder(result.lastID)
+}
+
+export async function getOrder(orderId) {
+  const order = await get('SELECT * FROM orders WHERE id = ?', [orderId])
+  if (!order) return null
+  
+  return {
+    ...order,
+    items: safeParse(order.items)
+  }
+}
+
+export async function updateOrderStatus(orderId, status, additionalData = {}) {
+  const updates = ['status = ?', 'updated_at = CURRENT_TIMESTAMP']
+  const params = [status]
+  
+  if (additionalData.yookassaPaymentId) {
+    updates.push('yookassa_payment_id = ?')
+    params.push(additionalData.yookassaPaymentId)
+  }
+  
+  params.push(orderId)
+  
+  await run(`UPDATE orders SET ${updates.join(', ')} WHERE id = ?`, params)
+  return await getOrder(orderId)
+}
+
+export async function getUserOrders(userId) {
+  const orders = await all('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', [userId])
+  return orders.map(order => ({
+    ...order,
+    items: safeParse(order.items)
+  }))
 }
 
 

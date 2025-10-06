@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
-import { getProducts, getCart, addToCart, removeFromCart, createOrder, createYooKassaPayment } from './api.js'
+import { getProducts, getCart, addToCart, removeFromCart, createOrderWithDelivery, createOrderPayment } from './api.js'
 import ProductCard from './components/ProductCard.jsx'
 import AdminPanel from './components/AdminPanel.jsx'
 import PromoCategories from './components/PromoCategories.jsx'
+import OrderForm from './components/OrderForm.jsx'
 
 export default function App() {
   // Простейший вход в админку без роутера
@@ -36,6 +37,10 @@ export default function App() {
   const [activeNav, setActiveNav] = useState('catalog') // home|catalog|cart|fav|profile
   const [visibleCount, setVisibleCount] = useState(20)
   const sentinelRef = useRef(null)
+  
+  // Новые состояния для формы заказа
+  const [orderFormOpen, setOrderFormOpen] = useState(false)
+  const [orderSubmitting, setOrderSubmitting] = useState(false)
 
   useEffect(() => {
     // Инициализация Telegram WebApp (если открыто внутри Telegram)
@@ -168,29 +173,35 @@ export default function App() {
     try { localStorage.removeItem('mini_favorites_v1') } catch {}
   }
 
-  const handleCheckout = async () => {
-    setPlacing(true)
+  const handleCheckout = async (orderData) => {
+    setOrderSubmitting(true)
     try {
+      // Создаем заказ с данными доставки
+      const orderResponse = await createOrderWithDelivery(orderData)
+      const orderId = orderResponse.order.id
+
+      // Создаем платеж для заказа  
       const w = window
       const returnUrl = `${w.location.origin}${w.location.pathname}`
-      const payment = await createYooKassaPayment(returnUrl)
-      if (payment?.confirmation_url) {
+      const paymentResponse = await createOrderPayment(orderId, returnUrl)
+      
+      if (paymentResponse?.confirmation_url) {
+        setOrderFormOpen(false)
         setConfirmOpen(false)
-        w.location.href = payment.confirmation_url
+        w.location.href = paymentResponse.confirmation_url
       } else {
         alert('Не удалось получить ссылку на оплату')
       }
     } catch (e) {
-      alert(`Ошибка оплаты: ${e?.message || e}`)
+      alert(`Ошибка оформления заказа: ${e?.message || e}`)
     } finally {
-      setPlacing(false)
+      setOrderSubmitting(false)
     }
   }
 
-  const openConfirm = () => {
-    setConfirmPromoInput(promoCode || promoInput || '')
-    setConfirmError('')
-    setConfirmOpen(true)
+  const openOrderForm = () => {
+    setOrderFormOpen(true)
+    setCartOpen(false)
   }
 
   const applyConfirmPromo = () => {
@@ -393,7 +404,7 @@ export default function App() {
             {/* Убрали промокод и скидку из полноэкранной корзины */}
             <div className="confirm-actions" style={{ marginTop: 14 }}>
               <button className="primary" onClick={() => setCartOpen(false)}>Назад</button>
-              <button className="primary" disabled={!payable || placing} onClick={() => { setCartOpen(false); openConfirm() }}>Оформить</button>
+              <button className="primary" disabled={!payable || placing} onClick={openOrderForm}>Оформить</button>
             </div>
 
             {/* Рекомендации в корзине */}
@@ -422,6 +433,18 @@ export default function App() {
           </div>
         </div>
       )}
+      {orderFormOpen && (
+        <OrderForm
+          cart={cart}
+          totalAmount={total}
+          finalAmount={payable}
+          discountAmount={discount}
+          promoCode={promoCode}
+          onClose={() => setOrderFormOpen(false)}
+          onSubmit={handleCheckout}
+          isSubmitting={orderSubmitting}
+        />
+      )}
       {confirmOpen && (
         <div className="confirm-overlay" role="dialog" aria-modal="true">
           <div className="confirm-sheet">
@@ -434,19 +457,11 @@ export default function App() {
               <div className="confirm-total">К оплате: {payable} ₽</div>
             </div>
             <div className="promo-row" style={{ marginTop: 12 }}>
-              <input
-                className="promo-input"
-                type="text"
-                placeholder="Промокод"
-                value={confirmPromoInput}
-                onChange={e => { setConfirmPromoInput(e.target.value); setConfirmError('') }}
-              />
-              <button className="primary apply" onClick={applyConfirmPromo}>Применить</button>
+              <span>Старый способ оформления заказа больше не поддерживается</span>
             </div>
-            {confirmError && <div className="promo-error">{confirmError}</div>}
             <div className="confirm-actions">
               <button className="link" onClick={() => setConfirmOpen(false)}>Назад</button>
-              <button className="primary" disabled={placing} onClick={handleCheckout}>Оформить</button>
+              <button className="primary" onClick={openOrderForm}>Новое оформление</button>
             </div>
           </div>
         </div>

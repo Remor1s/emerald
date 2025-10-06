@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || '' // при билде на Pages используем мок-данные
+const API = import.meta.env.VITE_API_URL || 'http://localhost:4000' // при билде на Pages используем мок-данные
 
 // --- Mock Data (генерируем из изображений Davines) ---
 
@@ -371,6 +371,66 @@ export const getPromoConfig = () => {
 export const savePromoConfig = (cfg = { code: '', percent: 0 }) => {
   try { localStorage.setItem(PROMO_CFG_KEY, JSON.stringify({ code: (cfg.code||'').toUpperCase(), percent: Number(cfg.percent)||0 })) } catch(e) {}
   return mockRequest({ ok: true })
+}
+
+// === Новые функции для работы с полным флоу заказов ===
+
+export const createOrderWithDelivery = async (orderData) => {
+  if (!API) throw new Error('API не настроен')
+  
+  const res = await fetch(`${API}/api/orders/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-user-id': uid() },
+    body: JSON.stringify(orderData)
+  })
+  
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data?.message || data?.error || 'Ошибка создания заказа')
+  }
+  
+  return data
+}
+
+export const createOrderPayment = async (orderId, returnUrl) => {
+  if (!API) throw new Error('API не настроен')
+  
+  const res = await fetch(`${API}/api/orders/${orderId}/payment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-user-id': uid() },
+    body: JSON.stringify({ returnUrl })
+  })
+  
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data?.message || data?.error || 'Ошибка создания платежа')
+  }
+  
+  return data
+}
+
+
+export const getUserOrders = async () => {
+  if (!API) return mockRequest({ orders: [] })
+  
+  try {
+    const res = await fetch(`${API}/api/orders`, {
+      headers: { 'x-user-id': uid() }
+    })
+    if (res.ok) return res.json()
+  } catch(e) {}
+  
+  return mockRequest({ orders: [] })
+}
+
+export const getOrder = async (orderId) => {
+  if (!API) throw new Error('API не настроен')
+  
+  const res = await fetch(`${API}/api/orders/${orderId}`, {
+    headers: { 'x-user-id': uid() }
+  })
+  
+  return res.json()
 }
 
 
